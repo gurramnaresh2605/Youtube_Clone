@@ -1,33 +1,32 @@
-name: Build and Deploy Vite App to Azure Web App Slot
+name: Deploy to Azure Web App
 
 on:
   push:
     branches:
-      - main
+      - main  # or your deployment branch
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         with:
-          node-version: '20'
+          node-version: '14'  # specify the Node.js version you are using
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install  # or any command to install dependencies
 
-      - name: Build Vite app
-        run: npm run build
+      - name: Build project
+        run: npm run build  # or your build command
 
-      - name: Deploy to Azure Web App Slot
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: youtubeweb
-          slot-name: youtubewebProduction  # <-- Your slot name here
-          publish-profile: ${{secrets.mykey}}
-          package: build
+          app-name: youtubeweb  # your Azure Web App name
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}  # GitHub secret with the publish profile
+          package: ./build  # path to the folder containing your build (adjust if needed)

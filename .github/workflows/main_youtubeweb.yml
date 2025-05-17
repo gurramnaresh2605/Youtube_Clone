@@ -1,71 +1,56 @@
-name: Build and deploy Node.js app to Azure Web App - youtubeweb
+name: Build and Deploy Vite App to Azure Web App
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: '20'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build project (if applicable)
-        run: npm run build --if-present
+      - name: Build Vite app
+        run: npm run build
 
-      - name: Run tests (if applicable)
-        run: npm test --if-present
-
-      - name: Create deployment package
-        run: |
-          mkdir -p deploy
-          cp -r * deploy
-          cd deploy
-          zip -r ../release.zip .
-        shell: bash
-
-      - name: Upload artifact
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: node-app
-          path: release.zip
+          name: vite-build
+          path: dist
 
   deploy:
+    needs: build-and-deploy
     runs-on: ubuntu-latest
-    needs: build
     environment:
-      name: 'Production'
+      name: production
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
-      - name: Download artifact
+      - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: node-app
-          path: .
-
-      - name: Unzip artifact
-        run: unzip release.zip
+          name: vite-build
+          path: dist
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
+        uses: azure/webapps-deploy@v2
         with:
-          app-name: 'youtubeweb'
-          slot-name: 'Production'
-          package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_35532BCBA9C0413397EB8521C823E960 }}
+          app-name: youtubeweb
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
+          package: dist

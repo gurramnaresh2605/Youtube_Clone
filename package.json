@@ -1,4 +1,4 @@
-package.json is : {
+{
   "name": "project_youtube_video_player",
   "version": "1.0.0",
   "private": true,
